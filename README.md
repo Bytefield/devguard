@@ -16,7 +16,11 @@ npm i -g devguard
 devguard bootstrap    # run setup commands (pnpm install, prisma generate, …)
 devguard preflight    # verify environment before running tests
 devguard test         # run test suite with timeout + kill-tree protection
+devguard status       # print detected project root and config summary
 ```
+
+`status` is read-only — it never runs commands. Use it to debug why devguard is picking up the wrong
+root or config, or to confirm the resolved test command and timeout before a long run.
 
 All three read `.devguard.json` by walking up from the current directory.
 

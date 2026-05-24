@@ -36,6 +36,7 @@ function loadConfig(cwd) {
   if (!found) {
     process.stderr.write('⚠ No .devguard.json found, using defaults\n');
     return {
+      configPath: null,
       projectRoot: cwd,
       config: {
         version: 1,
@@ -72,7 +73,7 @@ function loadConfig(cwd) {
   config.preflight = config.preflight || { checks: [] };
   config.test = config.test || { command: 'npm', args: ['test'], timeoutMs: 600000 };
 
-  return { config, projectRoot: found.projectRoot };
+  return { config, projectRoot: found.projectRoot, configPath: found.configPath };
 }
 
 module.exports = { loadConfig };

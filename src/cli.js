@@ -6,6 +6,7 @@ const { loadConfig } = require('./config.js');
 const { bootstrap } = require('./commands/bootstrap.js');
 const { preflight } = require('./commands/preflight.js');
 const { test } = require('./commands/test.js');
+const { status } = require('./commands/status.js');
 
 const pkg = require('../package.json');
 
@@ -16,6 +17,7 @@ Commands:
   bootstrap    Run setup commands defined in .devguard.json
   preflight    Run environment checks before execution
   test         Run the test suite with timeout and kill-tree protection
+  status       Show detected project root and config summary
 
 Options:
   --version    Print version and exit
@@ -23,7 +25,7 @@ Options:
 
 `.trimStart();
 
-const COMMANDS = { bootstrap, preflight, test };
+const COMMANDS = { bootstrap, preflight, test, status };
 
 async function main() {
   const args = process.argv.slice(2);
@@ -44,9 +46,9 @@ async function main() {
     process.exit(2);
   }
 
-  const { config, projectRoot } = loadConfig(process.cwd());
+  const { config, projectRoot, configPath } = loadConfig(process.cwd());
 
-  await COMMANDS[sub](config, projectRoot);
+  await COMMANDS[sub](config, projectRoot, configPath);
 }
 
 main().catch((err) => {
