@@ -64,6 +64,11 @@ All checks accept optional `name` (display label) and `message` (failure text) f
 { "type": "env_required", "name": "DATABASE_URL", "message": "Set DATABASE_URL in .env" }
 ```
 
+> **pnpm + Prisma note:** In pnpm projects, the generated client lives inside the pnpm store
+> (`.pnpm/…`), so an `exists` check on `node_modules/.prisma/client` can produce false negatives.
+> Use a `command` check instead: `node -e "require('@prisma/client')"` — it passes only when the
+> client is actually importable, regardless of where pnpm physically stores it.
+
 ## Hook integration
 
 ```sh
