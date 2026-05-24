@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "project": { "name": "synio" },
+  "bootstrap": {
+    "commands": [
+      "pnpm install",
+      "pnpm exec prisma generate"
+    ]
+  },
+  "preflight": {
+    "checks": [
+      {
+        "type": "command",
+        "command": "node -e \"require('@prisma/client')\"",
+        "timeoutMs": 10000,
+        "message": "Prisma client not generated. Run: pnpm exec prisma generate"
+      },
+      {
+        "type": "json_path_exists",
+        "file": "package.json",
+        "path": "pnpm.onlyBuiltDependencies",
+        "message": "pnpm.onlyBuiltDependencies not configured"
+      }
+    ]
+  },
+  "test": {
+    "command": "pnpm",
+    "args": ["test", "--", "--runInBand"],
+    "timeoutMs": 900000,
+    "logFile": ".devguard/test.log"
+  }
+}

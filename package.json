@@ -1,0 +1,8 @@
+{
+  "name": "devguard",
+  "version": "0.1.0",
+  "bin": { "devguard": "./bin/devguard" },
+  "engines": { "node": ">=20" },
+  "files": ["bin/", "src/"],
+  "license": "MIT"
+}
