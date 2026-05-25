@@ -30,5 +30,13 @@
   "publishConfig": {
     "access": "public"
   },
-  "license": "MIT"
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Bytefield/devguard.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Bytefield/devguard/issues"
+  },
+  "homepage": "https://github.com/Bytefield/devguard#readme"
 }

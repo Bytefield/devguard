@@ -1,3 +1,5 @@
 node_modules/
 .devguard/
 *.log
+
+*.tgz
