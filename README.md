@@ -5,9 +5,13 @@ CLI safety guards for local dev and AI agent workflows. Zero dependencies, Node 
 ## Install
 
 ```sh
-npm link   # from repo root (dev)
-# or
-npm i -g devguard
+npm i -g @dirtyspaniard/devguard
+```
+
+For development:
+
+```sh
+npm link
 ```
 
 ## Usage
