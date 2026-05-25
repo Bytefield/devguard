@@ -1,105 +1,155 @@
 # devguard
 
-Tiny, zero-dependency CLI safety guards for local dev and AI-agent workflows (Node ≥20).
+> CLI safety guards for local dev and AI agent workflows. Zero dependencies, Node ≥ 20.
 
-It standardizes three things across any repo:
+---
 
-- **bootstrap**: run setup commands (install, generate artifacts, etc.)
-- **preflight**: fail-fast environment checks before running anything expensive
-- **test**: run tests with a suite-level timeout + cross-platform kill-tree + optional log file
-- **status**: show detected project root + resolved config summary (read-only)
+## Why
+
+AI agents and Git worktrees create ephemeral environments where it's easy to run tests against a broken setup — missing `.env`, `prisma generate` never ran, or a hung process that silently blocks CI.
+
+**devguard puts explicit checkpoints before any of that can happen.**
+
+Instead of debugging a cryptic test failure ten minutes in, you fail fast at the gate with a clear message and a non-zero exit code.
+
+---
 
 ## Install
 
-```sh
+```bash
 npm i -g @dirtyspaniard/devguard
+# or link locally during development
+npm link   # from repo root
 ```
 
-For development:
+---
 
-```sh
-npm link
+## Commands
+
+### `devguard bootstrap`
+
+Runs your setup sequence — install dependencies, generate artifacts (Prisma client, migrations), seed the database, whatever your project needs. Steps are defined in `.devguard.json` and run in order.
+
+### `devguard preflight`
+
+Verifies the environment is ready before touching tests. Checks files, env vars, importable modules, or any command that must exit 0.
+
+It runs all configured checks and reports a summary. Exit code is non-zero if any check fails.
+
+### `devguard test`
+
+Runs your test suite with timeout enforcement and **kill-tree protection** — when the timeout fires, it kills the entire process tree, not just the parent process. Exit code `124` signals a timeout, matching the GNU `timeout` standard.
+
+### `devguard status` *(read-only)*
+
+Prints the detected project root, resolved config, and the test command that would run. Never executes anything. Use it to debug why devguard is picking up the wrong root, or to confirm the resolved timeout before a long run.
+
+---
+
+## Agent integration
+
+The canonical one-liner for AI agent workflows and fresh worktrees:
+
+```bash
+devguard bootstrap && devguard preflight && devguard test
 ```
 
-## Usage
+This is the recommended entry point whenever an agent spins up a new environment. It ensures setup is complete, the environment is sane, and the test suite runs with a guaranteed timeout — in that order, with a hard stop at the first failure.
 
-```sh
-devguard bootstrap
-devguard preflight
-devguard test
-devguard status
+Hook it into Husky for the same guarantee on every push:
+
+```bash
+# .husky/pre-push
+devguard preflight && devguard test
 ```
 
-All commands resolve the nearest `.devguard.json` by walking up from the current directory.
+---
 
 ## Config: `.devguard.json`
 
-See `examples/` for ready-to-copy configs (generic Node, pnpm + Prisma, etc.).
-
-## Config: `.devguard.json`
+devguard walks up from the current directory to find `.devguard.json`. Place it at your project root.
 
 ```json
 {
   "version": 1,
-  "project": { "name": "my-repo" },
-  "bootstrap": { "commands": ["pnpm install", "pnpm exec prisma generate"] },
+  "project": {
+    "name": "my-app"
+  },
+  "bootstrap": {
+    "commands": [
+      "pnpm install",
+      "pnpm exec prisma generate",
+      "pnpm exec prisma migrate deploy"
+    ]
+  },
   "preflight": {
     "checks": [
-      {
-        "type": "command",
-        "command": "node -e \"require('@prisma/client')\"",
-        "message": "Prisma client not generated. Run: pnpm exec prisma generate"
-      }
+      { "type": "exists", "path": ".env", "message": "Missing .env — copy .env.example" },
+      { "type": "env_required", "name": "DATABASE_URL", "message": "Set DATABASE_URL in .env" },
+      { "type": "command", "command": "node -e \"require('@prisma/client')\"", "message": "Run prisma generate first" }
     ]
   },
   "test": {
     "command": "pnpm",
     "args": ["test", "--", "--runInBand"],
-    "timeoutMs": 900000,
-    "logFile": ".devguard/test.log"
+    "env": { "NODE_ENV": "test" },
+    "timeoutMs": 600000,
+    "logFile": "logs/test.log"
   }
 }
 ```
 
-## Checks
+---
 
-Supported `preflight.checks`:
+## Preflight checks
 
-- `exists`: verify a path exists (relative to project root)
-- `command`: run a command and require exit code 0 (default timeout 10s)
-- `json_path_exists`: assert a dot-path exists in a JSON file
-- `env_required`: require an env var to be set and non-empty
+All checks accept optional `name` (display label) and `message` (failure text) fields.
 
-## Hook integration
+| Type | Required fields | Passes when |
+|---|---|---|
+| `exists` | `path` | File or directory exists at `path` |
+| `command` | `command`, `timeoutMs?` | Command exits 0 within timeout (default 10s) |
+| `json_path_exists` | `file`, `path` (dot notation) | Value at dot-path is not `undefined` |
+| `env_required` | `name` | `process.env[name]` is set and non-empty |
 
-Example `.husky/pre-push`:
+### Examples
 
-```sh
-devguard preflight && devguard test
+```jsonc
+// File must exist
+{ "type": "exists", "path": ".env", "message": "Missing .env file" }
+
+// Prisma client must be importable (pnpm-safe)
+{ "type": "command", "command": "node -e \"require('@prisma/client')\"", "message": "Run prisma generate first" }
+
+// Field must exist in package.json
+{ "type": "json_path_exists", "file": "package.json", "path": "pnpm.onlyBuiltDependencies" }
+
+// Env var must be set
+{ "type": "env_required", "name": "DATABASE_URL", "message": "Set DATABASE_URL in .env" }
 ```
 
-## Agent integration
+> **pnpm + Prisma note:** In pnpm projects, the generated client lives inside the pnpm store (`.pnpm/…`), so an `exists` check on `node_modules/.prisma/client` can produce false negatives. Use a `command` check instead: `node -e "require('@prisma/client')"` — it passes only when the client is actually importable, regardless of where pnpm physically stores it.
 
-```sh
-devguard bootstrap && devguard preflight && devguard test
-```
+---
 
 ## Exit codes
 
-- `0`: success
-- `1`: failure (bootstrap/preflight/tests)
-- `2`: usage/config error
-- `124`: timeout (suite killed)
+| Code | Meaning |
+|---|---|
+| `0` | Success |
+| `1` | Failure — test failed, check failed, or bootstrap step failed |
+| `2` | Usage error — unknown command or config parse error |
+| `124` | Timeout — process tree killed (matches GNU `timeout`) |
 
-## Release checklist
+---
 
-- Ensure npm account has MFA/2FA enabled (ideally required for publishing).
-- Run `npm test`.
-- Run `npm pack` and inspect the tarball contents (`tar -tf ...`) before publishing.
-- Tag the release (`git tag -a vX.Y.Z -m "vX.Y.Z"`) and push tags.
-- Publish scoped package as public (`npm publish --access public`).
-- (Optional) Publish with provenance (`npm publish --provenance`) if your setup supports it.
+## Limitations
 
-## Notes
+- `json_path_exists` supports simple dot notation only (`a.b.c`). Array indices, bracket notation, and keys containing dots are not supported.
+- `command` checks use basic quote-aware tokenization. For complex shell expressions (pipes, redirects, variable expansion), use `bootstrap.commands` instead — those run with `shell: true`.
 
-pnpm + Prisma: avoid path-based checks like `node_modules/.prisma/client` (pnpm may store artifacts under `.pnpm/...`). Prefer a `command` check (`node -e "require('@prisma/client')"`).
+---
+
+## License
+
+MIT
