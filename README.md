@@ -34,6 +34,10 @@ All commands resolve the nearest `.devguard.json` by walking up from the current
 
 ## Config: `.devguard.json`
 
+See `examples/` for ready-to-copy configs (generic Node, pnpm + Prisma, etc.).
+
+## Config: `.devguard.json`
+
 ```json
 {
   "version": 1,

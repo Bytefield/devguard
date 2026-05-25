@@ -1,0 +1,36 @@
+{
+  "version": 1,
+  "project": { "name": "node-simple" },
+  "bootstrap": {
+    "commands": [
+      "npm install"
+    ]
+  },
+  "preflight": {
+    "checks": [
+      {
+        "type": "exists",
+        "path": "package.json",
+        "message": "Missing package.json (run devguard from a Node project root)"
+      },
+      {
+        "type": "command",
+        "command": "node -v",
+        "timeoutMs": 10000,
+        "message": "Node is not available on PATH"
+      },
+      {
+        "type": "json_path_exists",
+        "file": "package.json",
+        "path": "scripts.test",
+        "message": "No scripts.test found in package.json"
+      }
+    ]
+  },
+  "test": {
+    "command": "npm",
+    "args": ["test"],
+    "timeoutMs": 600000,
+    "logFile": ".devguard/test.log"
+  }
+}
