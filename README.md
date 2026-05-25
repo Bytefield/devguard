@@ -87,6 +87,15 @@ devguard bootstrap && devguard preflight && devguard test
 - `2`: usage/config error
 - `124`: timeout (suite killed)
 
+## Release checklist
+
+- Ensure npm account has MFA/2FA enabled (ideally required for publishing).
+- Run `npm test`.
+- Run `npm pack` and inspect the tarball contents (`tar -tf ...`) before publishing.
+- Tag the release (`git tag -a vX.Y.Z -m "vX.Y.Z"`) and push tags.
+- Publish scoped package as public (`npm publish --access public`).
+- (Optional) Publish with provenance (`npm publish --provenance`) if your setup supports it.
+
 ## Notes
 
 pnpm + Prisma: avoid path-based checks like `node_modules/.prisma/client` (pnpm may store artifacts under `.pnpm/...`). Prefer a `command` check (`node -e "require('@prisma/client')"`).
