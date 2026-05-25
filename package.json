@@ -3,13 +3,32 @@
   "version": "0.2.1",
   "description": "CLI safety guards: bootstrap, preflight checks, and test watchdog for dev and agent workflows",
   "author": "Miguel Ramos",
-  "keywords": ["preflight", "bootstrap", "watchdog", "kill-tree", "devtools", "ci", "husky", "agents", "node"],
-  "bin": { "devguard": "./bin/devguard" },
-  "engines": { "node": ">=20" },
-  "files": ["bin/", "src/"],
+  "keywords": [
+    "preflight",
+    "bootstrap",
+    "watchdog",
+    "kill-tree",
+    "devtools",
+    "ci",
+    "husky",
+    "agents",
+    "node"
+  ],
+  "bin": {
+    "devguard": "bin/devguard"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "files": [
+    "bin/",
+    "src/"
+  ],
   "scripts": {
     "test": "node --test 'test/**/*.test.js'"
   },
-  "publishConfig": { "access": "public" },
+  "publishConfig": {
+    "access": "public"
+  },
   "license": "MIT"
 }
